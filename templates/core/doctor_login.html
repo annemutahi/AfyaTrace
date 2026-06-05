@@ -1,0 +1,52 @@
+{% extends 'core/base.html' %}
+{% block title %}Doctor Login — AfyaTrace{% endblock %}
+
+{% block extra_css %}
+.auth-wrap { display: flex; justify-content: center; align-items: flex-start; padding-top: 40px; }
+.auth-box { width: 100%; max-width: 440px; }
+.auth-header { margin-bottom: 32px; }
+.auth-header h2 { font-size: 1.6rem; font-weight: 700; letter-spacing: -0.5px; }
+.auth-header p { color: var(--text-muted); margin-top: 6px; font-size: 0.9rem; }
+.auth-footer { margin-top: 20px; text-align: center; font-size: 0.85rem; color: var(--text-muted); }
+.auth-footer a { color: var(--info); text-decoration: none; }
+{% endblock %}
+
+{% block content %}
+<div class="auth-wrap">
+    <div class="auth-box">
+        <div class="auth-header">
+            <div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--info);margin-bottom:10px;font-weight:600;">Doctor Portal</div>
+            <h2>Clinical Dashboard</h2>
+            <p>Sign in to access patient records</p>
+        </div>
+
+        <div class="card">
+            <form method="post">
+                {% csrf_token %}
+                {% if form.non_field_errors %}
+                    <div class="message error">{{ form.non_field_errors.0 }}</div>
+                {% endif %}
+                <div class="form-group">
+                    <label>Username</label>
+                    {{ form.username }}
+                    {{ form.username.errors }}
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    {{ form.password }}
+                    {{ form.password.errors }}
+                </div>
+                <button type="submit" class="btn" style="background:var(--info);color:#000;width:100%;justify-content:center;margin-top:8px;font-weight:700;">
+                    Sign in
+                </button>
+            </form>
+        </div>
+
+        <div class="auth-footer">
+            New doctor? <a href="{% url 'doctor_register' %}">Register here</a>
+            <br><br>
+            <a href="{% url 'landing' %}" style="color:var(--text-muted);">← Back to home</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

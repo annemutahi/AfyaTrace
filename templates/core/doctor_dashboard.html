@@ -1,0 +1,456 @@
+{% extends 'core/base.html' %}
+{% block title %}Doctor Dashboard — AfyaTrace{% endblock %}
+
+{% block extra_css %}
+/* LAYOUT */
+.dashboard { display: grid; grid-template-columns: 380px 1fr; gap: 24px; align-items: start; }
+@media (max-width: 900px) { .dashboard { grid-template-columns: 1fr; } }
+
+/* PANEL */
+.panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
+.panel-header { padding: 18px 22px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+.panel-header h3 { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+.panel-body { padding: 22px; }
+
+/* SEARCH */
+.search-box { display: flex; gap: 10px; }
+.search-input {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 11px 14px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color .2s;
+}
+.search-input:focus { border-color: var(--info); }
+
+/* CONSENT PANEL */
+.consent-box {
+    margin-top: 20px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 18px;
+    display: none;
+}
+.consent-patient-name { font-size: 1.1rem; font-weight: 700; margin-bottom: 4px; }
+.consent-id { font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 16px; }
+.ussd-box {
+    background: #0a0f0d;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 14px;
+    margin-bottom: 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+}
+.ussd-line { color: var(--text-muted); margin-bottom: 4px; }
+.ussd-line strong { color: var(--text); }
+.ussd-badge {
+    display: inline-block;
+    background: #1a0a00;
+    border: 1px solid var(--warn);
+    color: var(--warn);
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 100px;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+}
+.consent-actions { display: flex; gap: 10px; }
+
+/* PATIENT RECORD */
+.record-section { display: none; }
+.patient-header { margin-bottom: 20px; }
+.patient-name-lg { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.5px; }
+.patient-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.chip {
+    font-size: 0.75rem;
+    padding: 4px 12px;
+    border-radius: 100px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    font-weight: 600;
+}
+
+.history-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    margin-bottom: 10px;
+}
+.history-meta { display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--text-muted); margin-bottom: 10px; }
+.hx-field { margin-bottom: 8px; }
+.hx-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-dim); font-weight: 600; margin-bottom: 3px; }
+.hx-val { font-size: 0.88rem; }
+
+/* ADD VISIT FORM */
+.add-visit-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-top: 20px;
+    display: none;
+}
+.add-visit-section h3 { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; color: var(--text-muted); }
+
+/* PRESCRIPTIONS */
+.rx-row {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 14px;
+    margin-bottom: 10px;
+    position: relative;
+}
+.rx-remove {
+    position: absolute;
+    top: 10px; right: 10px;
+    background: none;
+    border: none;
+    color: var(--danger);
+    cursor: pointer;
+    font-size: 1rem;
+    opacity: 0.6;
+}
+.rx-remove:hover { opacity: 1; }
+
+/* END SESSION */
+.session-footer {
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* TOAST */
+.toast {
+    position: fixed;
+    bottom: 24px; right: 24px;
+    background: var(--surface);
+    border: 1px solid var(--accent);
+    border-radius: var(--radius-sm);
+    padding: 14px 20px;
+    font-size: 0.88rem;
+    color: var(--accent);
+    z-index: 9999;
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all .3s;
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+
+.dot-online { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); margin-right: 6px; animation: pulse 2s infinite; }
+{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:24px;">
+    <div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--info);margin-bottom:8px;font-weight:600;">Doctor Dashboard</div>
+    <h1 style="font-size:1.8rem;font-weight:700;letter-spacing:-0.5px;">Dr. {{ doctor.user.get_full_name }}</h1>
+    <p style="color:var(--text-muted);margin-top:4px;">{{ doctor.specialization|default:"General Practice" }} · {{ doctor.hospital|default:"" }}</p>
+</div>
+
+<div class="dashboard">
+    <!-- LEFT: SEARCH PANEL -->
+    <div>
+        <div class="panel">
+            <div class="panel-header">
+                <span style="color:var(--info);">🔍</span>
+                <h3>Patient Lookup</h3>
+            </div>
+            <div class="panel-body">
+                <p style="font-size:0.84rem;color:var(--text-muted);margin-bottom:16px;">Enter the patient's national ID number to begin.</p>
+                <div class="search-box">
+                    <input type="text" id="searchId" class="search-input" placeholder="e.g. 12345678" maxlength="20">
+                    <button class="btn btn-ghost btn-sm" onclick="searchPatient()">Search</button>
+                </div>
+
+                <div id="consentBox" class="consent-box">
+                    <div class="consent-patient-name" id="foundName"></div>
+                    <div class="consent-id" id="foundId"></div>
+
+                    <div class="ussd-badge pulse">📱 USSD Pending</div>
+                    <div class="ussd-box">
+                        <div class="ussd-line">Sending USSD prompt to <strong id="foundPhone">patient</strong>…</div>
+                        <div class="ussd-line" style="margin-top:6px;">"AfyaTrace: Dr. {{ doctor.user.get_full_name }} is requesting access</div>
+                        <div class="ussd-line">&nbsp;to your health records. Press 1 to Allow, 2 to Deny."</div>
+                    </div>
+                    <p style="font-size:0.78rem;color:var(--text-muted);margin-bottom:14px;">In production, the patient receives a real USSD prompt on their phone. For this demo, use the simulate button below.</p>
+                    <div class="consent-actions">
+                        <button class="btn btn-warn btn-sm" onclick="requestAccess()">📲 Request Access (USSD)</button>
+                        <button class="btn btn-primary btn-sm" onclick="simulateAccess()">⚡ Simulate Access</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- RIGHT: PATIENT RECORD -->
+    <div>
+        <div id="recordSection" class="record-section">
+            <div class="panel">
+                <div class="panel-header" style="justify-content:space-between;">
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <span class="dot-online"></span>
+                        <h3>Active Patient Record</h3>
+                    </div>
+                    <span id="accessBadge" style="font-size:0.7rem;background:#0a2a1a;border:1px solid var(--accent);color:var(--accent);padding:3px 10px;border-radius:100px;font-weight:600;">ACCESS GRANTED</span>
+                </div>
+                <div class="panel-body">
+                    <!-- Patient Info -->
+                    <div class="patient-header">
+                        <div class="patient-name-lg" id="recordName"></div>
+                        <div class="patient-chips" id="recordChips"></div>
+                    </div>
+
+                    <hr class="divider">
+
+                    <!-- History -->
+                    <div style="margin-bottom:8px;font-size:0.75rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);font-weight:700;">Visit History</div>
+                    <div id="historyList"></div>
+                </div>
+            </div>
+
+            <!-- Add New Visit -->
+            <div class="add-visit-section" id="addVisitSection">
+                <h3>➕ New Visit Record</h3>
+
+                <div class="form-group">
+                    <label>Chief Complaint</label>
+                    <textarea id="vComplaint" rows="2" placeholder="Patient's presenting complaint…" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px 14px;color:var(--text);font-family:'Sora',sans-serif;font-size:0.9rem;outline:none;resize:vertical;"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Diagnosis</label>
+                    <textarea id="vDiagnosis" rows="3" placeholder="Clinical diagnosis and findings…" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px 14px;color:var(--text);font-family:'Sora',sans-serif;font-size:0.9rem;outline:none;resize:vertical;"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Notes / Follow-up</label>
+                    <textarea id="vNotes" rows="2" placeholder="Referrals, follow-up instructions, other notes…" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px 14px;color:var(--text);font-family:'Sora',sans-serif;font-size:0.9rem;outline:none;resize:vertical;"></textarea>
+                </div>
+
+                <div style="margin:20px 0 12px;font-size:0.75rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);font-weight:700;">Prescriptions</div>
+
+                <div id="rxContainer"></div>
+
+                <button class="btn btn-ghost btn-sm" onclick="addRxRow()" style="margin-bottom:20px;">
+                    + Add Medication
+                </button>
+
+                <div style="display:flex;gap:10px;">
+                    <button class="btn btn-primary" onclick="submitVisit()">Save Visit Record</button>
+                    <button class="btn btn-ghost" onclick="document.getElementById('addVisitSection').style.display='none'">Cancel</button>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;" id="actionButtons">
+                <button class="btn btn-outline" onclick="document.getElementById('addVisitSection').style.display='block';document.getElementById('addVisitSection').scrollIntoView({behavior:'smooth'})">
+                    ➕ Add New Visit
+                </button>
+            </div>
+
+            <!-- End Session -->
+            <div class="session-footer">
+                <button class="btn btn-danger" onclick="endSession()">🔒 End Session</button>
+            </div>
+        </div>
+
+        <!-- Placeholder -->
+        <div id="placeholder" style="color:var(--text-dim);text-align:center;padding:80px 20px;font-size:0.95rem;">
+            <div style="font-size:3rem;margin-bottom:16px;">🔐</div>
+            <div style="font-weight:600;margin-bottom:8px;">No patient loaded</div>
+            <div style="font-size:0.84rem;">Search for a patient by ID number and request access to view records.</div>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const CSRF = '{{ csrf_token }}';
+let currentPatientId = null;
+
+function showToast(msg, color='var(--accent)') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.style.borderColor = color;
+    t.style.color = color;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+async function searchPatient() {
+    const id = document.getElementById('searchId').value.trim();
+    if (!id) return;
+    const res = await fetch(`/api/search-patient/?id_number=${encodeURIComponent(id)}`);
+    const data = await res.json();
+    const box = document.getElementById('consentBox');
+    if (data.found) {
+        currentPatientId = data.patient_id;
+        document.getElementById('foundName').textContent = data.name;
+        document.getElementById('foundId').textContent = `ID: ${data.id_number}`;
+        document.getElementById('foundPhone').textContent = data.phone || 'patient';
+        box.style.display = 'block';
+        showToast(`Patient found: ${data.name}`);
+    } else {
+        box.style.display = 'none';
+        showToast('No patient found with that ID number.', 'var(--danger)');
+    }
+}
+
+function requestAccess() {
+    showToast('📲 USSD prompt sent to patient\'s phone…', 'var(--warn)');
+}
+
+async function simulateAccess() {
+    if (!currentPatientId) return;
+    const res = await fetch(`/api/simulate-access/?patient_id=${currentPatientId}`);
+    const data = await res.json();
+    if (!data.success) { showToast('Error fetching patient data.', 'var(--danger)'); return; }
+
+    const p = data.patient;
+    document.getElementById('recordName').textContent = p.name;
+    document.getElementById('recordChips').innerHTML = `
+        <span class="chip mono">${p.id_number}</span>
+        <span class="chip" style="color:var(--accent);">🩸 ${p.blood_type}</span>
+        <span class="chip">📅 ${p.dob}</span>
+        <span class="chip">📞 ${p.phone || 'No phone'}</span>
+        ${p.allergies !== 'None recorded' ? `<span class="chip" style="color:var(--warn);">⚠️ Allergies: ${p.allergies}</span>` : ''}
+    `;
+
+    const hist = document.getElementById('historyList');
+    if (data.visits.length === 0) {
+        hist.innerHTML = '<div style="color:var(--text-muted);font-size:0.88rem;padding:16px 0;">No previous visits recorded.</div>';
+    } else {
+        hist.innerHTML = data.visits.map(v => `
+            <div class="history-item">
+                <div class="history-meta">
+                    <span>${v.doctor}</span>
+                    <span>${v.date}</span>
+                </div>
+                <div class="hx-field"><div class="hx-label">Complaint</div><div class="hx-val">${v.chief_complaint}</div></div>
+                <div class="hx-field"><div class="hx-label">Diagnosis</div><div class="hx-val" style="color:var(--accent)">${v.diagnosis}</div></div>
+                ${v.notes ? `<div class="hx-field"><div class="hx-label">Notes</div><div class="hx-val" style="color:var(--text-muted)">${v.notes}</div></div>` : ''}
+                ${v.prescriptions.length ? `
+                    <div class="hx-field">
+                        <div class="hx-label">Prescriptions</div>
+                        ${v.prescriptions.map(rx => `<div style="font-size:0.82rem;color:var(--info);font-weight:600;">${rx.medication} <span style="color:var(--text-muted);font-weight:400;">${rx.dosage} · ${rx.frequency} · ${rx.duration}</span></div>`).join('')}
+                    </div>
+                ` : ''}
+            </div>
+        `).join('');
+    }
+
+    document.getElementById('recordSection').style.display = 'block';
+    document.getElementById('placeholder').style.display = 'none';
+    document.getElementById('consentBox').style.display = 'none';
+    showToast('✅ Access granted — patient records loaded');
+}
+
+let rxCount = 0;
+function addRxRow() {
+    rxCount++;
+    const div = document.createElement('div');
+    div.className = 'rx-row';
+    div.id = `rx-${rxCount}`;
+    div.innerHTML = `
+        <button class="rx-remove" onclick="this.parentElement.remove()">✕</button>
+        <div class="form-row" style="margin-bottom:8px;">
+            <div class="form-group" style="margin-bottom:0">
+                <label>Medication</label>
+                <input type="text" name="med_name" placeholder="e.g. Amoxicillin" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;color:var(--text);font-family:'Sora',sans-serif;font-size:0.88rem;outline:none;">
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+                <label>Dosage</label>
+                <input type="text" name="med_dosage" placeholder="e.g. 500mg" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;color:var(--text);font-family:'Sora',sans-serif;font-size:0.88rem;outline:none;">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group" style="margin-bottom:0">
+                <label>Frequency</label>
+                <input type="text" name="med_freq" placeholder="e.g. Twice daily" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;color:var(--text);font-family:'Sora',sans-serif;font-size:0.88rem;outline:none;">
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+                <label>Duration</label>
+                <input type="text" name="med_dur" placeholder="e.g. 7 days" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;color:var(--text);font-family:'Sora',sans-serif;font-size:0.88rem;outline:none;">
+            </div>
+        </div>
+    `;
+    document.getElementById('rxContainer').appendChild(div);
+}
+
+async function submitVisit() {
+    const complaint = document.getElementById('vComplaint').value.trim();
+    const diagnosis = document.getElementById('vDiagnosis').value.trim();
+    if (!complaint || !diagnosis) { showToast('Complaint and diagnosis are required.', 'var(--danger)'); return; }
+
+    const rxRows = document.querySelectorAll('.rx-row');
+    const prescriptions = [];
+    rxRows.forEach(row => {
+        const inputs = row.querySelectorAll('input');
+        const name = inputs[0]?.value.trim();
+        if (name) {
+            prescriptions.push({
+                medication_name: name,
+                dosage: inputs[1]?.value.trim() || '',
+                frequency: inputs[2]?.value.trim() || '',
+                duration: inputs[3]?.value.trim() || '',
+                instructions: '',
+            });
+        }
+    });
+
+    const res = await fetch('/api/add-visit/', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': CSRF},
+        body: JSON.stringify({
+            patient_id: currentPatientId,
+            chief_complaint: complaint,
+            diagnosis: diagnosis,
+            notes: document.getElementById('vNotes').value.trim(),
+            prescriptions,
+        })
+    });
+    const data = await res.json();
+    if (data.success) {
+        showToast('✅ Visit record saved!');
+        document.getElementById('vComplaint').value = '';
+        document.getElementById('vDiagnosis').value = '';
+        document.getElementById('vNotes').value = '';
+        document.getElementById('rxContainer').innerHTML = '';
+        document.getElementById('addVisitSection').style.display = 'none';
+        // Refresh record
+        setTimeout(() => simulateAccess(), 500);
+    } else {
+        showToast('Error saving visit.', 'var(--danger)');
+    }
+}
+
+function endSession() {
+    if (!confirm('End session and clear patient data?')) return;
+    currentPatientId = null;
+    document.getElementById('recordSection').style.display = 'none';
+    document.getElementById('placeholder').style.display = 'block';
+    document.getElementById('consentBox').style.display = 'none';
+    document.getElementById('searchId').value = '';
+    document.getElementById('addVisitSection').style.display = 'none';
+    showToast('🔒 Session ended — patient data cleared');
+}
+
+document.getElementById('searchId').addEventListener('keydown', e => {
+    if (e.key === 'Enter') searchPatient();
+});
+</script>
+{% endblock %}

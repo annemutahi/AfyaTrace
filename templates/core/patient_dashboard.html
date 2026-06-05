@@ -1,0 +1,149 @@
+{% extends 'core/base.html' %}
+{% block title %}My Health Records — AfyaTrace{% endblock %}
+
+{% block extra_css %}
+.page-header { margin-bottom: 32px; }
+.page-header h1 { font-size: 1.8rem; font-weight: 700; letter-spacing: -0.5px; }
+.page-header p  { color: var(--text-muted); margin-top: 6px; }
+
+.patient-meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+    margin-bottom: 32px;
+}
+.meta-item { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px 18px; }
+.meta-item .label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-dim); font-weight: 600; margin-bottom: 4px; }
+.meta-item .value { font-weight: 600; font-size: 0.95rem; }
+
+.section-title { font-size: 1rem; font-weight: 700; color: var(--text-muted); margin-bottom: 16px; text-transform: uppercase; letter-spacing: 1px; font-size: 0.75rem; }
+
+.visit-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 14px;
+    transition: border-color .2s;
+}
+.visit-card:hover { border-color: var(--accent); }
+
+.visit-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+.visit-date { font-size: 0.8rem; font-family: 'JetBrains Mono', monospace; color: var(--text-muted); }
+.visit-doctor { font-weight: 600; font-size: 0.95rem; }
+
+.visit-field { margin-bottom: 12px; }
+.visit-field .field-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-dim); font-weight: 600; margin-bottom: 4px; }
+.visit-field .field-value { font-size: 0.9rem; line-height: 1.6; }
+
+.rx-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.rx-pill {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 0.82rem;
+}
+.rx-name { font-weight: 700; color: var(--info); }
+.rx-details { color: var(--text-muted); margin-top: 2px; font-size: 0.75rem; }
+
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-muted);
+}
+.empty-icon { font-size: 3rem; margin-bottom: 16px; }
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--accent);margin-bottom:8px;font-weight:600;">Patient Dashboard</div>
+    <h1>{{ patient.user.get_full_name }}</h1>
+    <p>Your complete health history</p>
+</div>
+
+<div class="patient-meta">
+    <div class="meta-item">
+        <div class="label">ID Number</div>
+        <div class="value mono">{{ patient.id_number }}</div>
+    </div>
+    <div class="meta-item">
+        <div class="label">Date of Birth</div>
+        <div class="value">{{ patient.date_of_birth|default:"Not set" }}</div>
+    </div>
+    <div class="meta-item">
+        <div class="label">Blood Type</div>
+        <div class="value text-accent">{{ patient.blood_type|default:"Unknown" }}</div>
+    </div>
+    <div class="meta-item">
+        <div class="label">Phone</div>
+        <div class="value">{{ patient.phone_number|default:"Not set" }}</div>
+    </div>
+    <div class="meta-item">
+        <div class="label">Total Visits</div>
+        <div class="value">{{ visits|length }}</div>
+    </div>
+    <div class="meta-item">
+        <div class="label">Allergies</div>
+        <div class="value" style="font-size:0.82rem;">{{ patient.allergies|default:"None" }}</div>
+    </div>
+</div>
+
+<div class="section-title">Visit History</div>
+
+{% if visits %}
+    {% for visit in visits %}
+    <div class="visit-card">
+        <div class="visit-header">
+            <div>
+                <div class="visit-doctor">{{ visit.doctor }}</div>
+                {% if visit.doctor.specialization %}
+                <div style="font-size:0.78rem;color:var(--text-muted);margin-top:2px;">{{ visit.doctor.specialization }}</div>
+                {% endif %}
+            </div>
+            <div class="visit-date">{{ visit.date|date:"d M Y, H:i" }}</div>
+        </div>
+
+        <div class="visit-field">
+            <div class="field-label">Chief Complaint</div>
+            <div class="field-value">{{ visit.chief_complaint }}</div>
+        </div>
+
+        <div class="visit-field">
+            <div class="field-label">Diagnosis</div>
+            <div class="field-value text-accent">{{ visit.diagnosis }}</div>
+        </div>
+
+        {% if visit.notes %}
+        <div class="visit-field">
+            <div class="field-label">Doctor's Notes</div>
+            <div class="field-value" style="color:var(--text-muted);">{{ visit.notes }}</div>
+        </div>
+        {% endif %}
+
+        {% if visit.prescriptions.all %}
+        <div class="visit-field">
+            <div class="field-label">Prescriptions</div>
+            <div class="rx-list">
+                {% for rx in visit.prescriptions.all %}
+                <div class="rx-pill">
+                    <div class="rx-name">{{ rx.medication_name }}</div>
+                    <div class="rx-details">{{ rx.dosage }} · {{ rx.frequency }} · {{ rx.duration }}</div>
+                    {% if rx.instructions %}
+                    <div class="rx-details" style="margin-top:2px;font-style:italic;">{{ rx.instructions }}</div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+{% else %}
+    <div class="empty-state">
+        <div class="empty-icon">📋</div>
+        <div style="font-weight:600;margin-bottom:6px;">No visits recorded yet</div>
+        <div style="font-size:0.88rem;">Your health records will appear here after your first doctor visit.</div>
+    </div>
+{% endif %}
+{% endblock %}
