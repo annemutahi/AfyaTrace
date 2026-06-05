@@ -3,7 +3,7 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-afyatrace-mvp-secret-key-change-in-production'
 DEBUG = False
-ALLOWED_HOSTS = ['https://afyatrace.onrender.com', 'localhost']
+ALLOWED_HOSTS = ['afyatrace.onrender.com', 'localhost']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
