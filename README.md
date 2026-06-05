@@ -85,7 +85,7 @@ The database ships with pre-seeded accounts for quick testing.
 | Role | Username | Password |
 |---|---|---|
 | Doctor | `dr_wanjiku` | `test1234` |
-| Patient | `juma_k` | `test1234` |
+| Patient | `Annita` | `test1234` |
 
 The sample patient's national ID is `12345678` — use this in the doctor's search field.
 
