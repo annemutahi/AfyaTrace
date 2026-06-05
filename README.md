@@ -78,31 +78,6 @@ afyatrace/
 - Python 3.9+
 - pip
 
-### Installation
-
-```bash
-# 1. Unzip and enter the project
-unzip afyatrace_mvp.zip
-cd afyatrace
-
-# 2. (Optional but recommended) create a virtual environment
-python -m venv venv
-source venv/bin/activate      # Windows: venv\Scripts\activate
-
-# 3. Install Django
-pip install django
-
-# 4. Apply migrations
-python manage.py migrate
-
-# 5. Start the development server
-python manage.py runserver
-```
-
-Visit `http://127.0.0.1:8000` in your browser.
-
----
-
 ## Demo Accounts
 
 The database ships with pre-seeded accounts for quick testing.
@@ -122,20 +97,6 @@ The sample patient's national ID is `12345678` — use this in the doctor's sear
 4. Click **⚡ Simulate Access** to load the patient's records
 5. Click **➕ Add New Visit** to add a diagnosis and prescriptions
 6. Click **🔒 End Session** when done — patient data is cleared from the view
-
----
-
-## API Endpoints
-
-These are internal JSON endpoints used by the doctor dashboard.
-
-| Method | URL | Description |
-|---|---|---|
-| `GET` | `/api/search-patient/?id_number=` | Check if a patient exists by ID |
-| `GET` | `/api/simulate-access/?patient_id=` | Fetch full patient record (post-consent) |
-| `POST` | `/api/add-visit/` | Save a new visit with prescriptions |
-
-All endpoints require an authenticated doctor session and include CSRF protection.
 
 ---
 
@@ -162,20 +123,3 @@ Prescription  — linked to a Visit; stores medication, dosage, frequency, durat
 - [ ] Deploy to a cloud host (e.g. Railway, Render, or a Kenyan VPS)
 
 ---
-
-## Security Notes
-
-This is an MVP for development and demonstration purposes. Before going to production:
-
-- Replace `SECRET_KEY` in `settings.py` with a strong, randomly generated value stored in an environment variable
-- Set `DEBUG = False` and configure `ALLOWED_HOSTS` properly
-- Switch to PostgreSQL or another production-grade database
-- Enforce HTTPS
-- Add rate limiting to the patient search and access endpoints
-- Implement a real USSD consent flow — the simulate button must not exist in production
-
----
-
-## License
-
-MIT — free to use, modify, and build on.
